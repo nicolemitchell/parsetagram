@@ -25,6 +25,7 @@ class ProfileViewController: UIViewController, UICollectionViewDelegate, UIColle
     var posts = [PFObject]()
     var profile = [PFObject]()
     
+    
     @IBAction func logoutButton(sender: AnyObject) {
         PFUser.logOutInBackgroundWithBlock { (error: NSError?) in
             // PFUser.currentUser() will now be nil
@@ -42,9 +43,7 @@ class ProfileViewController: UIViewController, UICollectionViewDelegate, UIColle
         ProfileCollectionView.delegate = self
         ProfileCollectionView.dataSource = self
         username.text = PFUser.currentUser()?.username
-        
-        
-        
+
     }
     
     override func viewWillAppear(animated: Bool) {
