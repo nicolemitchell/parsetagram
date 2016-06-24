@@ -9,7 +9,14 @@
 import UIKit
 import Parse
 
-class FeedViewController: UIViewController, UITableViewDataSource, UITableViewDelegate {
+class FeedViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UIScrollViewDelegate {
+    
+    
+    var isMoreDataLoading = false
+    var loadingMoreView:InfiniteScrollActivityView?
+    
+    
+    var refreshControl = UIRefreshControl()
     
     @IBOutlet weak var FeedTableView: UITableView!
     
@@ -33,7 +40,24 @@ class FeedViewController: UIViewController, UITableViewDataSource, UITableViewDe
         FeedTableView.dataSource = self
         FeedTableView.delegate = self
         
+        self.refreshControl.addTarget(self, action: #selector(refreshControlAction(_:)), forControlEvents: UIControlEvents.ValueChanged)
+        FeedTableView.insertSubview(refreshControl, atIndex: 0)
         
+        // Set up Infinite Scroll loading indicator
+        let frame = CGRectMake(0, FeedTableView.contentSize.height, FeedTableView.bounds.size.width, InfiniteScrollActivityView.defaultHeight)
+        loadingMoreView = InfiniteScrollActivityView(frame: frame)
+        loadingMoreView!.hidden = true
+        FeedTableView.addSubview(loadingMoreView!)
+        
+        var insets = FeedTableView.contentInset;
+        insets.bottom += InfiniteScrollActivityView.defaultHeight;
+        FeedTableView.contentInset = insets
+        
+    }
+    
+    func refreshControlAction(refreshControl: UIRefreshControl) {
+        fetchPosts()
+        refreshControl.endRefreshing()
     }
     
     override func viewWillAppear(animated: Bool) {
@@ -67,7 +91,7 @@ class FeedViewController: UIViewController, UITableViewDataSource, UITableViewDe
         let query = PFQuery(className: "Post")
         query.orderByDescending("createdAt")
         query.includeKey("author")
-        query.limit = 20
+        query.limit = 3
         
         // fetch data asynchronously
         query.findObjectsInBackgroundWithBlock { (posts: [PFObject]?, error: NSError?) -> Void in
@@ -81,6 +105,50 @@ class FeedViewController: UIViewController, UITableViewDataSource, UITableViewDe
     }
     
 
+    func loadMoreData() {
+        // construct PFQuery
+        let query = PFQuery(className: "Post")
+        query.orderByDescending("createdAt")
+        query.includeKey("author")
+        query.limit = 20
+        query.skip = posts.count
+        
+        // fetch data asynchronously
+        query.findObjectsInBackgroundWithBlock { (posts: [PFObject]?, error: NSError?) -> Void in
+            if let posts = posts {
+                self.posts.appendContentsOf(posts)
+                self.isMoreDataLoading = false
+                // Stop the loading indicator
+                self.loadingMoreView!.stopAnimating()
+                self.FeedTableView.reloadData()
+            } else {
+                print(error?.localizedDescription)
+            }
+        }
+        
+    }
+    
+    func scrollViewDidScroll(scrollView: UIScrollView) {
+        if (!isMoreDataLoading) {
+            // Calculate the position of one screen length before the bottom of the results
+            let scrollViewContentHeight = FeedTableView.contentSize.height
+            let scrollOffsetThreshold = scrollViewContentHeight - FeedTableView.bounds.size.height
+            
+            // When the user has scrolled past the threshold, start requesting
+            if(scrollView.contentOffset.y > scrollOffsetThreshold && FeedTableView.dragging) {
+                
+                isMoreDataLoading = true
+                
+                // Update position of loadingMoreView, and start loading indicator
+                let frame = CGRectMake(0, FeedTableView.contentSize.height, FeedTableView.bounds.size.width, InfiniteScrollActivityView.defaultHeight)
+                loadingMoreView?.frame = frame
+                loadingMoreView!.startAnimating()
+                
+                // Code to load more results
+                loadMoreData()
+            }
+        }
+    }
     
     
 
@@ -96,6 +164,15 @@ class FeedViewController: UIViewController, UITableViewDataSource, UITableViewDe
     override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
         // Get the new view controller using segue.destinationViewController.
         // Pass the selected object to the new view controller.
+        
+        let cell = sender as! UITableViewCell
+        let indexPath = FeedTableView.indexPathForCell(cell)
+        let post = posts[indexPath!.row]
+        
+        let detailViewController = segue.destinationViewController as! DetailViewController
+        
+        detailViewController.post = post
+        
     }
     
 
