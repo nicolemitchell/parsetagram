@@ -16,7 +16,41 @@ class DetailViewController: UIViewController {
     var username: String!
     var profile = [PFObject]()
     
+    @IBOutlet weak var likesCountLabel: UILabel!
+    @IBOutlet weak var heartImage: UIImageView!
 
+    @IBAction func likeButton(sender: AnyObject) {
+        if post != nil {
+            var likers : [String] = []
+            if let foo = self.post!["likers"] as? [String] {
+                likers = foo
+            }
+            
+            
+            var likesCount = self.post!["likesCount"] as! Int
+            if likers.contains(PFUser.currentUser()!.username!) {
+                let index = likers.indexOf(PFUser.currentUser()!.username!)
+                likers.removeAtIndex(index!)
+                likesCount -= 1
+                self.post!["likesCount"] = likesCount
+                likesCountLabel.text = "\(likesCount)"
+                heartImage.hidden = true
+                
+            } else {
+                likers.append(PFUser.currentUser()!.username!)
+                likesCount += 1
+                self.post!["likesCount"] = likesCount
+                likesCountLabel.text = "\(likesCount)"
+                heartImage.hidden = false
+                
+            }
+            self.post!.saveInBackgroundWithBlock({ (success: Bool, error: NSError?) in
+                print("woo")
+            })
+        }
+
+    }
+    
     @IBOutlet weak var postProfPic: PFImageView!
     @IBOutlet weak var postUsername: UILabel!
     @IBOutlet weak var postImage: PFImageView!
@@ -34,6 +68,14 @@ class DetailViewController: UIViewController {
         let parsedImage = self.post["media"] as? PFFile
         let parsedCaption = self.post["caption"]
         let parsedTimestamp = self.post.createdAt! as NSDate
+        let likesCount = self.post["likesCount"]
+        let likers = self.post["likers"]
+        
+//        if likers.contains(PFUser.currentUser()!.username!) {
+//            heartImage.hidden = false
+//        } else {
+//            heartImage.hidden = true
+//        }
         
         let dateFormatter = NSDateFormatter()
         dateFormatter.dateStyle = NSDateFormatterStyle.LongStyle
@@ -50,6 +92,7 @@ class DetailViewController: UIViewController {
         postImage.loadInBackground()
         postCaption.text = parsedCaption.description
         postTimestamp.text = dateString
+        likesCountLabel.text = "\(likesCount)"
         
     
         let query = PFQuery(className: "_User")
@@ -58,6 +101,27 @@ class DetailViewController: UIViewController {
         query.findObjectsInBackgroundWithBlock { (profile: [PFObject]?, error: NSError?) -> Void in
             if let profile = profile {
                 self.profile = profile
+                
+                if (profile.count != 0) {
+                    let user = profile[profile.count-1]
+                    let profPic = user["profile_picture"] as? PFFile
+                    self.postProfPic.file = profPic
+                    self.postProfPic.loadInBackground()
+                    
+                }
+                
+                if (self.postProfPic.file == nil) {
+                    let profImage = UIImage(named: "profile")
+                    
+                    self.postProfPic.file = self.getPFFileFromImage(profImage)
+                    self.postProfPic.loadInBackground()
+                    
+                }
+                else {
+                    
+                }
+                
+
 
                 
             } else {
@@ -65,25 +129,6 @@ class DetailViewController: UIViewController {
             }
             
         }
-        if (profile.count != 0) {
-            let user = profile[profile.count-1]
-            let profPic = user["profile_picture"] as? PFFile
-            postProfPic.file = profPic
-            postProfPic.loadInBackground()
-            
-        }
-        
-        if (postProfPic.file == nil) {
-            let profImage = UIImage(named: "profile")
-            
-            postProfPic.file = getPFFileFromImage(profImage)
-            postProfPic.loadInBackground()
-
-        }
-        else {
-            
-        }
-        
         print(postProfPic.file)
 
         

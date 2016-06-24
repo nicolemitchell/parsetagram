@@ -164,16 +164,18 @@ class ProfileViewController: UIViewController, UICollectionViewDelegate, UIColle
      
      // In a storyboard-based application, you will often want to do a little preparation before navigation
      override func prepareForSegue(segue: UIStoryboardSegue, sender: AnyObject?) {
+        if segue.identifier == "profileDetailSegue" {
+            let cell = sender as! UICollectionViewCell
+            let indexPath = ProfileCollectionView.indexPathForCell(cell)
+            let post = posts[indexPath!.row]
+            let username = PFUser.currentUser()?.username
+            
+            let detailViewController = segue.destinationViewController as! DetailViewController
+            
+            detailViewController.post = post
+            detailViewController.username = username
+        }
         
-        let cell = sender as! UICollectionViewCell
-        let indexPath = ProfileCollectionView.indexPathForCell(cell)
-        let post = posts[indexPath!.row]
-        let username = PFUser.currentUser()?.username
-        
-        let detailViewController = segue.destinationViewController as! DetailViewController
-        
-        detailViewController.post = post
-        detailViewController.username = username
         
      // Get the new view controller using segue.destinationViewController.
      // Pass the selected object to the new view controller.

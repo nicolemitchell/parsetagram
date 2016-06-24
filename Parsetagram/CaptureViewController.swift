@@ -94,6 +94,7 @@ class CaptureViewController: UIViewController, UIImagePickerControllerDelegate, 
         post["author"] = PFUser.currentUser() // Pointer column type that points to PFUser
         post["caption"] = caption
         post["likesCount"] = 0
+        post["likers"] = []
         post["commentsCount"] = 0
         
         // Save object (following function will save the object in Parse asynchronously)

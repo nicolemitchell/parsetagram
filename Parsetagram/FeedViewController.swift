@@ -8,12 +8,16 @@
 
 import UIKit
 import Parse
+import ParseUI
 
 class FeedViewController: UIViewController, UITableViewDataSource, UITableViewDelegate, UIScrollViewDelegate {
     
     
     var isMoreDataLoading = false
     var loadingMoreView:InfiniteScrollActivityView?
+    var profile = [PFObject]()
+
+    
     
     
     var refreshControl = UIRefreshControl()
@@ -67,20 +71,113 @@ class FeedViewController: UIViewController, UITableViewDataSource, UITableViewDe
     
     
     func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return 1
+    }
+    
+    func numberOfSectionsInTableView(tableView: UITableView) -> Int {
         return posts.count
     }
+    
+    func tableView(tableView: UITableView, viewForHeaderInSection section: Int) -> UIView? {
+        let headerFrame:CGRect = tableView.frame
+        let view = UIView(frame: CGRectMake(0, 0, tableView.frame.size.width, 18))
+        let label = UILabel(frame: CGRectMake(75, 25, tableView.frame.size.width, 18))
+        let image = PFImageView(frame: CGRectMake(35, 20, 30, 30))
+        label.font = UIFont.systemFontOfSize(17)
+        let post = posts[section]
+        let user = post["author"].username
+        label.text = user
+        view.addSubview(label)
+        view.addSubview(image)
+        view.backgroundColor = UIColor.whiteColor() // Set your background color
+        
+        
+        let query = PFQuery(className: "_User")
+        query.whereKey("username", equalTo: (label.text)!)
+        
+        query.findObjectsInBackgroundWithBlock { (profile: [PFObject]?, error: NSError?) -> Void in
+            if let profile = profile {
+                self.profile = profile
+                
+                if (profile.count != 0) {
+                    let user = profile[profile.count-1]
+                    let profPic = user["profile_picture"] as? PFFile
+                    image.file = profPic
+                    image.loadInBackground()
+                    
+                }
+                
+                if (image.file == nil) {
+                    let profImage = UIImage(named: "profile")
+                    
+                    image.file = self.getPFFileFromImage(profImage)
+                    image.loadInBackground()
+                    
+                }
+                else {
+                }
+                
+            } else {
+                print(error?.localizedDescription)
+            }
+        }
+        
+        return view
+    }
+    
+    func tableView(tableView: UITableView, heightForHeaderInSection section: Int) -> CGFloat {
+        return 61.0
+    }
+    
+    func getPFFileFromImage(image: UIImage?) -> PFFile? {
+        // check if image is not nil
+        if let image = image {
+            // get image data and check if that is not nil
+            if let imageData = UIImagePNGRepresentation(image) {
+                return PFFile(name: "image.png", data: imageData)
+            }
+        }
+        return nil
+    }
+    
+    
+    
+    
+//    func tableView(tableView: UITableView, )
+    
+//    func tableView(tableView: UITableView, willDisplayCell cell: UITableViewCell, forRowAtIndexPath indexPath: NSIndexPath) {
+//        cell.alpha = 0
+//        UIView.animateWithDuration(1.25) {
+//            cell.alpha = 1.0
+//        }
+//    }
     
     func tableView(tableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
         
         let cell = tableView.dequeueReusableCellWithIdentifier("postCell", forIndexPath: indexPath) as! postCell
         
         let post = posts[indexPath.row]
+        cell.post = post
         let parsedImage = post["media"] as? PFFile
         let parsedCaption = post["caption"]
+        let likesCount = post["likesCount"]
         
         cell.photoPost.file = parsedImage
         cell.captionPost.text = parsedCaption.description
         cell.photoPost.loadInBackground()
+        cell.likesCountLabel.text = "\(likesCount)"
+        
+        var likers : [String] = []
+        if let foo = post["likers"] as? [String] {
+            likers = foo
+        }
+        
+        if likers.contains(PFUser.currentUser()!.username!) {
+            cell.heartImage.hidden = false
+        }
+        else {
+            cell.heartImage.hidden = true
+        }
     
         return cell
     }
@@ -91,7 +188,7 @@ class FeedViewController: UIViewController, UITableViewDataSource, UITableViewDe
         let query = PFQuery(className: "Post")
         query.orderByDescending("createdAt")
         query.includeKey("author")
-        query.limit = 3
+        query.limit = 20
         
         // fetch data asynchronously
         query.findObjectsInBackgroundWithBlock { (posts: [PFObject]?, error: NSError?) -> Void in
@@ -165,13 +262,16 @@ class FeedViewController: UIViewController, UITableViewDataSource, UITableViewDe
         // Get the new view controller using segue.destinationViewController.
         // Pass the selected object to the new view controller.
         
-        let cell = sender as! UITableViewCell
-        let indexPath = FeedTableView.indexPathForCell(cell)
-        let post = posts[indexPath!.row]
-        
-        let detailViewController = segue.destinationViewController as! DetailViewController
-        
-        detailViewController.post = post
+        if segue.identifier == "feedDetailSegue" {
+            let cell = sender as! UITableViewCell
+            let indexPath = FeedTableView.indexPathForCell(cell)
+            let post = posts[indexPath!.row]
+            
+            let detailViewController = segue.destinationViewController as! DetailViewController
+            
+            detailViewController.post = post
+
+        }
         
     }
     
