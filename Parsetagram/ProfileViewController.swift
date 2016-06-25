@@ -44,6 +44,7 @@ class ProfileViewController: UIViewController, UICollectionViewDelegate, UIColle
         ProfileCollectionView.delegate = self
         ProfileCollectionView.dataSource = self
         username.text = PFUser.currentUser()?.username
+        fetchProfilePic()
         
         self.refreshControl.addTarget(self, action: #selector(refreshControlAction(_:)), forControlEvents: UIControlEvents.ValueChanged)
         ProfileCollectionView.insertSubview(refreshControl, atIndex: 0)

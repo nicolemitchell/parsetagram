@@ -127,10 +127,11 @@ class CaptureViewController: UIViewController, UIImagePickerControllerDelegate, 
         let user = PFUser.currentUser()
         user!["profile_picture"] = getPFFileFromImage(imageToPost.image)
         user?.saveInBackgroundWithBlock({ (success: Bool, error: NSError?) in
+            self.tabBarController?.selectedIndex = 2
         })
         imageToPost.image = nil
         captionField.text = nil
-        tabBarController?.selectedIndex = 2
+        
     }
     
     func resize(image: UIImage, newSize: CGSize) -> UIImage {
