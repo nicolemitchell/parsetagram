@@ -17,9 +17,10 @@ class DetailViewController: UIViewController {
     var profile = [PFObject]()
     
     @IBOutlet weak var likesCountLabel: UILabel!
-    @IBOutlet weak var heartImage: UIImageView!
 
-    @IBAction func likeButton(sender: AnyObject) {
+    @IBOutlet weak var likeSelector: UIButton!
+    
+    @IBAction func likeButton(sender: UIButton) {
         if post != nil {
             var likers : [String] = []
             if let foo = self.post!["likers"] as? [String] {
@@ -28,27 +29,30 @@ class DetailViewController: UIViewController {
             
             
             var likesCount = self.post!["likesCount"] as! Int
-            if likers.contains(PFUser.currentUser()!.username!) {
+            if likeSelector.selected == true {
                 let index = likers.indexOf(PFUser.currentUser()!.username!)
                 likers.removeAtIndex(index!)
+                self.post!["likers"] = likers
+                print(likers)
                 likesCount -= 1
                 self.post!["likesCount"] = likesCount
                 likesCountLabel.text = "\(likesCount)"
-                heartImage.hidden = true
+                sender.selected = false
                 
             } else {
                 likers.append(PFUser.currentUser()!.username!)
+                print(likers)
+                self.post!["likers"] = likers
                 likesCount += 1
                 self.post!["likesCount"] = likesCount
                 likesCountLabel.text = "\(likesCount)"
-                heartImage.hidden = false
+                sender.selected = true
                 
             }
             self.post!.saveInBackgroundWithBlock({ (success: Bool, error: NSError?) in
-                print("woo")
+                print("")
             })
         }
-
     }
     
     @IBOutlet weak var postProfPic: PFImageView!
@@ -69,13 +73,16 @@ class DetailViewController: UIViewController {
         let parsedCaption = self.post["caption"]
         let parsedTimestamp = self.post.createdAt! as NSDate
         let likesCount = self.post["likesCount"]
-        let likers = self.post["likers"]
         
-//        if likers.contains(PFUser.currentUser()!.username!) {
-//            heartImage.hidden = false
-//        } else {
-//            heartImage.hidden = true
-//        }
+        var likers : [String] = []
+        if let foo = self.post!["likers"] as? [String] {
+            likers = foo
+        }
+        if likers.contains(PFUser.currentUser()!.username!) {
+            likeSelector.selected = true
+        } else {
+            likeSelector.selected = false
+        }
         
         let dateFormatter = NSDateFormatter()
         dateFormatter.dateStyle = NSDateFormatterStyle.LongStyle

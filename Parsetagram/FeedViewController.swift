@@ -156,8 +156,9 @@ class FeedViewController: UIViewController, UITableViewDataSource, UITableViewDe
         
         let cell = tableView.dequeueReusableCellWithIdentifier("postCell", forIndexPath: indexPath) as! postCell
         
-        let post = posts[indexPath.row]
+        let post = posts[indexPath.section]
         cell.post = post
+        
         let parsedImage = post["media"] as? PFFile
         let parsedCaption = post["caption"]
         let likesCount = post["likesCount"]
@@ -166,18 +167,20 @@ class FeedViewController: UIViewController, UITableViewDataSource, UITableViewDe
         cell.captionPost.text = parsedCaption.description
         cell.photoPost.loadInBackground()
         cell.likesCountLabel.text = "\(likesCount)"
-        
         var likers : [String] = []
         if let foo = post["likers"] as? [String] {
             likers = foo
         }
-        
         if likers.contains(PFUser.currentUser()!.username!) {
-            cell.heartImage.hidden = false
+            cell.likeSelector.selected = true
+        } else {
+            cell.likeSelector.selected = false
         }
-        else {
-            cell.heartImage.hidden = true
-        }
+        
+        
+        
+       
+    
     
         return cell
     }
@@ -265,7 +268,7 @@ class FeedViewController: UIViewController, UITableViewDataSource, UITableViewDe
         if segue.identifier == "feedDetailSegue" {
             let cell = sender as! UITableViewCell
             let indexPath = FeedTableView.indexPathForCell(cell)
-            let post = posts[indexPath!.row]
+            let post = posts[indexPath!.section]
             
             let detailViewController = segue.destinationViewController as! DetailViewController
             

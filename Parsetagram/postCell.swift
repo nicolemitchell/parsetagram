@@ -14,13 +14,12 @@ class postCell: UITableViewCell {
 
     var post: PFObject?
     
-    
-    @IBOutlet weak var heartImage: UIImageView!
-    
+        
+    @IBOutlet weak var likeSelector: UIButton!
     @IBOutlet weak var photoPost: PFImageView!
     @IBOutlet weak var captionPost: UILabel!
     @IBOutlet weak var likesCountLabel: UILabel!
-    @IBAction func likeButton(sender: AnyObject) {
+    @IBAction func likeButton(sender: UIButton) {
         
         if post != nil {
             var likers : [String] = []
@@ -30,24 +29,28 @@ class postCell: UITableViewCell {
             
             
             var likesCount = self.post!["likesCount"] as! Int
-            if likers.contains(PFUser.currentUser()!.username!) {
+            if likeSelector.selected == true {
                 let index = likers.indexOf(PFUser.currentUser()!.username!)
                 likers.removeAtIndex(index!)
+                self.post!["likers"] = likers
+                print(likers)
                 likesCount -= 1
                 self.post!["likesCount"] = likesCount
                 likesCountLabel.text = "\(likesCount)"
-                heartImage.hidden = true
+                sender.selected = false
                 
             } else {
                 likers.append(PFUser.currentUser()!.username!)
+                print(likers)
+                self.post!["likers"] = likers
                 likesCount += 1
                 self.post!["likesCount"] = likesCount
                 likesCountLabel.text = "\(likesCount)"
-                heartImage.hidden = false
+                sender.selected = true
                 
             }
             self.post!.saveInBackgroundWithBlock({ (success: Bool, error: NSError?) in
-                print("woo")
+                print("")
             })
         }
         

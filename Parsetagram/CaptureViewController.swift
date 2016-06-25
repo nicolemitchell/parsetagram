@@ -8,10 +8,11 @@
 
 import UIKit
 import Parse
+import ParseUI
 
 class CaptureViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
 
-    @IBOutlet weak var imageToPost: UIImageView!
+    @IBOutlet weak var imageToPost: PFImageView!
     
     @IBOutlet weak var captionField: UITextField!
     

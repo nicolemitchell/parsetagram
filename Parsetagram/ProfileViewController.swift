@@ -100,10 +100,19 @@ class ProfileViewController: UIViewController, UICollectionViewDelegate, UIColle
                 if (profile.count != 0) {
                     let user = profile[profile.count-1]
                     let parsedImage = user["profile_picture"] as? PFFile
-                    self.profilePic.file = parsedImage
-                    self.profilePic.loadInBackground()
+                    
+                    if(self.profilePic.file == nil) {
+                        let profImage = UIImage(named: "profile")
+                        
+                        self.profilePic.file = self.getPFFileFromImage(profImage)
+                    } else {
+
+                        self.profilePic.file = parsedImage
+                        self.profilePic.loadInBackground()
+                    }
                     
                 }
+                
                 print(profile)
                     
             } else {
